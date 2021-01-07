@@ -44,6 +44,21 @@
 			<LobbySettings :token="token" />
 			<SipSettings v-if="canUserEnableSIP" />
 		</AppSettingsSection>
+		<AppSettingsSection
+			:title="t('spreed', 'Danger zone')"
+			class="app-settings-section">
+			<button v-if="canLeaveConversation"
+				:icon="iconLeaveConversation"
+				@click.prevent.exact="leaveConversation">
+				{{ t('spreed', 'Leave conversation') }}
+			</button>
+			<button v-if="canDeleteConversation"
+				icon="icon-delete-critical"
+				class="critical"
+				@click.prevent.exact="deleteConversation">
+				{{ t('spreed', 'Delete conversation') }}
+			</button>
+		</AppSettingsSection>
 	</AppSettingsDialog>
 </template>
 
