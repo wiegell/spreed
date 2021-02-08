@@ -25,10 +25,18 @@ import BrowserStorage from '../services/BrowserStorage'
 import {
 	CONVERSATION,
 } from '../constants'
+import { RecordRTCPromisesHandler, MultiStreamRecorder, invokeSaveAsDialog } from 'recordrtc'
+
+// TODO: move to a recordings / streams specific store ?
+const recorder = {
+	instance: null,
+	streams: null,
+}
 
 const state = {
 	isGrid: false,
 	isStripeOpen: true,
+	isRecording: false,
 	lastIsGrid: null,
 	lastIsStripeOpen: null,
 	presentationStarted: false,
@@ -40,6 +48,7 @@ const state = {
 const getters = {
 	isGrid: (state) => state.isGrid,
 	isStripeOpen: (state) => state.isStripeOpen,
+	isRecording: (state) => state.isRecording,
 	lastIsGrid: (state) => state.lastIsGrid,
 	lastIsStripeOpen: (state) => state.lastIsStripeOpen,
 	presentationStarted: (state) => state.presentationStarted,
@@ -96,6 +105,9 @@ const mutations = {
 	clearBackgroundImageAverageColorCache(state) {
 		state.backgroundImageAverageColorCache = {}
 	},
+	setRecordingStarted(state, flag) {
+		state.isRecording = flag
+	},
 }
 
 const actions = {
@@ -117,11 +129,13 @@ const actions = {
 		context.dispatch('setCallViewMode', { isGrid: isGrid, isStripeOpen: true })
 	},
 
-	leaveCall(context) {
+	async leaveCall(context) {
 		// clear raised hands as they were specific to the call
 		context.commit('clearParticipantHandRaised')
 
 		context.commit('clearBackgroundImageAverageColorCache')
+
+		await context.dispatch('stopRecording')
 	},
 
 	/**
@@ -206,6 +220,52 @@ const actions = {
 		})
 		context.commit('presentationStarted', false)
 	},
+
+	startRecording(context) {
+		if (context.getters.isRecording) {
+			return
+		}
+		context.commit('setRecordingStarted', true)
+
+		console.debug('Starting recording, registered streams: ', recorder.streams)
+		recorder.instance = new RecordRTCPromisesHandler(recorder.streams, {
+			type: 'video',
+			mimeType: 'video/webm',
+			recorderType: MultiStreamRecorder,
+			disableLogs: true,
+		})
+		recorder.instance.startRecording()
+	},
+
+	async stopRecording(context) {
+		if (!context.getters.isRecording) {
+			return
+		}
+		context.commit('setRecordingStarted', false)
+
+		await recorder.instance.stopRecording()
+		// TODO: later on upload the blobs to NC
+		// for now, make it download (this will likely trigger multiple dialogs!)
+		invokeSaveAsDialog(await recorder.instance.getBlob())
+	},
+
+	async addRecordingStream(context, stream) {
+		if (!recorder.streams) {
+			recorder.streams = []
+		}
+		console.debug('Added recorder stream', stream)
+		recorder.streams.push(stream)
+
+		if (context.getters.isRecording) {
+			const internalRecorder = await recorder.instance.getInternalRecorder()
+			internalRecorder.addStreams([stream])
+		}
+	},
+
+	removeRecordingStream(context, stream) {
+		// TODO
+	},
+
 }
 
 export default { state, mutations, getters, actions }

@@ -151,6 +151,7 @@ export default {
 			}
 
 			attachMediaStream(screen, this.$refs.screen)
+			this.$store.dispatch('addRecordingStream', screen)
 		},
 
 	},

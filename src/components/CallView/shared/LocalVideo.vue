@@ -274,6 +274,8 @@ export default {
 				muted: true,
 			}
 			attachMediaStream(localStream, this.$refs.video, options)
+			// FIXME: extra settings
+			this.$store.dispatch('addRecordingStream', localStream)
 		},
 
 		handleStopFollowing() {

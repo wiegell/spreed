@@ -410,6 +410,9 @@ export default {
 			// camera available but disabled.
 			attachMediaStream(stream, this.$refs.video)
 
+			// FIXME: should do that in the webrtc lib instead where we have all streams!
+			this.$store.dispatch('addRecordingStream', stream)
+
 			this.$refs.video.muted = true
 
 			// At least Firefox, Opera and Edge move the video to a wrong

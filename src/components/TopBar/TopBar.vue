@@ -28,9 +28,8 @@
 				:icon="changeViewIconClass"
 				@click="changeView">
 				{{ changeViewText }}
-			</actionbutton>
+			</ActionButton>
 		</Actions>
-		<!-- sidebar toggle -->
 		<Actions
 			v-shortkey.once="['f']"
 			class="top-bar__button forced-background"
@@ -72,6 +71,30 @@
 				v-if="showModerationOptions && canFullModerate && isInCall">
 				<ActionSeparator />
 				<ActionButton
+					v-if="!isRecording"
+					:aria-label="t('spreed', 'Start recording')"
+					:close-after-click="true"
+					@click="startRecording">
+					<Record
+						slot="icon"
+						:size="16"
+						decorative
+						title="" />
+					{{ t('spreed', 'Start recording') }}
+				</ActionButton>
+				<ActionButton
+					v-if="isRecording"
+					:aria-label="t('spreed', 'Start recording')"
+					:close-after-click="true"
+					@click="stopRecording">
+					<Stop
+						slot="icon"
+						:size="16"
+						decorative
+						title="" />
+					{{ t('spreed', 'Stop recording') }}
+				</ActionButton>
+				<ActionButton
 					:close-after-click="true"
 					@click="forceMuteOthers">
 					<MicrophoneOff
@@ -111,6 +134,8 @@ import BrowserStorage from '../../services/BrowserStorage'
 import ActionLink from '@nextcloud/vue/dist/Components/ActionLink'
 import ActionSeparator from '@nextcloud/vue/dist/Components/ActionSeparator'
 import MicrophoneOff from 'vue-material-design-icons/MicrophoneOff'
+import Record from 'vue-material-design-icons/Record'
+import Stop from 'vue-material-design-icons/Stop'
 import { CONVERSATION, PARTICIPANT } from '../../constants'
 import { generateUrl } from '@nextcloud/router'
 import { callParticipantCollection } from '../../utils/webrtc/index'
@@ -126,6 +151,8 @@ export default {
 		CallButton,
 		ActionSeparator,
 		MicrophoneOff,
+		Record,
+		Stop,
 	},
 
 	props: {
@@ -136,6 +163,10 @@ export default {
 	},
 
 	computed: {
+		isRecording() {
+			return this.$store.getters.isRecording
+		},
+
 		isFullscreen() {
 			return this.$store.getters.isFullscreen()
 		},
@@ -319,6 +350,14 @@ export default {
 			callParticipantCollection.callParticipantModels.forEach(callParticipantModel => {
 				callParticipantModel.forceMute()
 			})
+		},
+
+		startRecording() {
+			this.$store.dispatch('startRecording')
+		},
+
+		stopRecording() {
+			this.$store.dispatch('stopRecording')
 		},
 	},
 }
