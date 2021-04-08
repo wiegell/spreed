@@ -253,9 +253,9 @@ const actions = {
 			const fileName = (currentFile.newName || currentFile.name)
 			// Candidate rest of the path
 			const path = getters.getAttachmentFolder() + '/' + fileName
-			// Get a unique relative path based on the previous path variable
-			const uniquePath = await findUniquePath(client, userRoot, path)
 			try {
+				// Get a unique relative path based on the previous path variable
+				const uniquePath = await findUniquePath(client, userRoot, path)
 				// Upload the file
 				await client.putFileContents(userRoot + uniquePath, currentFile, {
 					onUploadProgress: progress => {
