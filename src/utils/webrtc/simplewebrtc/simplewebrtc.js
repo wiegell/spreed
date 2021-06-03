@@ -263,14 +263,6 @@ SimpleWebRTC.prototype.joinCall = function(name) {
 	this.emit('joinedRoom', name)
 }
 
-SimpleWebRTC.prototype.getEl = function(idOrEl) {
-	if (typeof idOrEl === 'string') {
-		return document.getElementById(idOrEl)
-	} else {
-		return idOrEl
-	}
-}
-
 SimpleWebRTC.prototype.startLocalVideo = function() {
 	const self = this
 	const constraints = {
