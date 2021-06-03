@@ -13,7 +13,6 @@ function SimpleWebRTC(opts) {
 		socketio: {/* 'force new connection':true */},
 		connection: null,
 		debug: false,
-		localVideoEl: '',
 		enableDataChannels: true,
 		autoRequestMedia: false,
 		autoRemoveVideos: true,
@@ -283,33 +282,12 @@ SimpleWebRTC.prototype.startLocalVideo = function() {
 			self.emit('localMediaError', err)
 		} else {
 			self.emit('localMediaStarted', constraints)
-
-			const localVideoContainer = self.getLocalVideoContainer()
-			if (localVideoContainer) {
-				attachMediaStream(stream, localVideoContainer, self.config.localVideo)
-			}
 		}
 	})
 }
 
 SimpleWebRTC.prototype.stopLocalVideo = function() {
 	this.webrtc.stop()
-}
-
-// this accepts either element ID or element
-// and either the video tag itself or a container
-// that will be used to put the video tag into.
-SimpleWebRTC.prototype.getLocalVideoContainer = function() {
-	const el = this.getEl(this.config.localVideoEl)
-	if (el && el.tagName === 'VIDEO') {
-		el.oncontextmenu = function() { return false }
-		return el
-	} else if (el) {
-		const video = document.createElement('video')
-		video.oncontextmenu = function() { return false }
-		el.appendChild(video)
-		return video
-	}
 }
 
 SimpleWebRTC.prototype.shareScreen = function(mode, cb) {
