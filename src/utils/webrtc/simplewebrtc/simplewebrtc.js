@@ -17,8 +17,6 @@ function SimpleWebRTC(opts) {
 		enableDataChannels: true,
 		autoRequestMedia: false,
 		autoRemoveVideos: true,
-		adjustPeerVolume: false,
-		peerVolumeWhenSpeaking: 0.25,
 		media: {
 			video: true,
 			audio: true,
@@ -171,12 +169,6 @@ function SimpleWebRTC(opts) {
 		self.connection.emit('message', payload)
 	})
 
-	// echo cancellation attempts
-	if (this.config.adjustPeerVolume) {
-		this.webrtc.on('speaking', this.setVolumeForAll.bind(this, this.config.peerVolumeWhenSpeaking))
-		this.webrtc.on('stoppedSpeaking', this.setVolumeForAll.bind(this, 1))
-	}
-
 	connection.on('stunservers', function(args) {
 		// resets/overrides the config
 		self.webrtc.config.peerConnectionConfig.iceServers = args
@@ -262,15 +254,6 @@ SimpleWebRTC.prototype.disconnect = function() {
 
 SimpleWebRTC.prototype.getDomId = function(peer) {
 	return [peer.id, peer.type, peer.broadcaster ? 'broadcasting' : 'incoming'].join('_')
-}
-
-// set volume on video tag for all peers takse a value between 0 and 1
-SimpleWebRTC.prototype.setVolumeForAll = function(volume) {
-	this.webrtc.peers.forEach(function(peer) {
-		if (peer.audioEl) {
-			peer.audioEl.volume = volume
-		}
-	})
 }
 
 SimpleWebRTC.prototype.joinCall = function(name) {
