@@ -506,6 +506,27 @@ return [
 		],
 
 		/**
+		 * Remote
+		 */
+
+		[
+			'name' => 'Remote#acceptShare',
+			'url' => 'api/{apiVersion}/remote/pending/{id}',
+			'verb' => 'POST',
+			'requirements' => [
+				'apiVersion' => 'v1',
+			],
+		],
+		[
+			'name' => 'Remote#rejectShare',
+			'url' => 'api/{apiVersion}/remote/pending/{id}',
+			'verb' => 'DELETE',
+			'requirements' => [
+				'apiVersion' => 'v1',
+			],
+		],
+
+		/**
 		 * PublicShareAuth
 		 */
 		[

@@ -26,6 +26,7 @@ declare(strict_types=1);
 namespace OCA\Talk\Migration;
 
 use Closure;
+use Doctrine\DBAL\Schema\SchemaException;
 use Doctrine\DBAL\Types\Types;
 use OCP\DB\ISchemaWrapper;
 use OCP\Migration\IOutput;
@@ -38,28 +39,37 @@ class Version12000Date20210610232111 extends SimpleMigrationStep {
 	 * @param Closure $schemaClosure The `\Closure` returns a `ISchemaWrapper`
 	 * @param array $options
 	 * @return null|ISchemaWrapper
+	 * @throws SchemaException
 	 */
-	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options) {
+	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		/** @var ISchemaWrapper $schema */
 		$schema = $schemaClosure();
 
-		if (!$schema->hasTable('talk_federated_rooms')) {
-			$table = $schema->createTable('talk_federated_rooms');
-			$table->addColumn('id', Types::BIGINT, [
-				'autoincrement' => true,
-				'notnull' => true,
-			]);
-			$table->addColumn('room_id', Types::BIGINT, [
-				'notnull' => true,
-				'unsigned' => true,
-			]);
-			$table->addColumn('instance_url', Types::TEXT, [
-				'notnull' => true,
-			]);
-			$table->addColumn('password', Types::TEXT, [
-				'notnull' => true,
-			]);
-			$table->setPrimaryKey('id');
+		if ($schema->hasTable('talk_attendees')) {
+			$table = $schema->getTable('talk_attendees');
+			if ($table->hasColumn('access_token')) {
+				$table->addColumn('access_token', Types::STRING, [
+					'notnull' => true,
+					'default' => ''
+				]);
+			}
+
+			if ($table->hasColumn('joined')) {
+				$table->addColumn('joined', Types::BOOLEAN, [
+					'notnull' => true,
+					'default' => false,
+				]);
+			}
+		}
+
+		if ($schema->hasTable('talk_rooms')) {
+			$table = $schema->getTable('talk_rooms');
+			if ($table->hasColumn('server_url')) {
+				$table->addColumn('server_url', Types::STRING, [
+					'notnull' => true,
+					'default' => '',
+				]);
+			}
 		}
 
 		return $schema;

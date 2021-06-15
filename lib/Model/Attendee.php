@@ -49,6 +49,10 @@ use OCP\AppFramework\Db\Entity;
  * @method int getLastMentionMessage()
  * @method void setReadPrivacy(int $readPrivacy)
  * @method int getReadPrivacy()
+ * @method void setAccessToken(string $accessToken)
+ * @method null|string getAccessToken()
+ * @method void setJoined(bool $joined)
+ * @method bool getJoined()
  */
 class Attendee extends Entity {
 	public const ACTOR_USERS = 'users';
@@ -56,6 +60,7 @@ class Attendee extends Entity {
 	public const ACTOR_GUESTS = 'guests';
 	public const ACTOR_EMAILS = 'emails';
 	public const ACTOR_CIRCLES = 'circles';
+	public const ACTOR_FEDERATED_REMOTE = 'federated_remote';
 
 	/** @var int */
 	protected $roomId;
@@ -93,6 +98,12 @@ class Attendee extends Entity {
 	/** @var int */
 	protected $readPrivacy;
 
+	/** @var string */
+	protected $accessToken;
+
+	/** @var int */
+	protected $joined;
+
 	public function __construct() {
 		$this->addType('roomId', 'int');
 		$this->addType('actorType', 'string');
@@ -106,6 +117,8 @@ class Attendee extends Entity {
 		$this->addType('lastReadMessage', 'int');
 		$this->addType('lastMentionMessage', 'int');
 		$this->addType('readPrivacy', 'int');
+		$this->addType('accessToken', 'string');
+		$this->addType('joined', 'bool');
 	}
 
 	public function getDisplayName(): string {
@@ -130,6 +143,8 @@ class Attendee extends Entity {
 			'last_read_message' => $this->getLastReadMessage(),
 			'last_mention_message' => $this->getLastMentionMessage(),
 			'read_privacy' => $this->getReadPrivacy(),
+			'access_token' => $this->getAccessToken(),
+			'joined' => $this->getJoined(),
 		];
 	}
 }

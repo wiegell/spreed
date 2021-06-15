@@ -185,6 +185,7 @@ class Manager {
 			(string) $row['name'],
 			(string) $row['description'],
 			(string) $row['password'],
+			(string) $row['server_url'],
 			(int) $row['active_guests'],
 			(int) $row['call_flag'],
 			$activeSince,
@@ -676,7 +677,7 @@ class Manager {
 	 * @return Room
 	 * @throws RoomNotFoundException
 	 */
-	public function getRoomByToken(string $token, ?string $preloadUserId = null): Room {
+	public function getRoomByToken(string $token, ?string $preloadUserId = null, ?string $serverUrl = ''): Room {
 		$preloadUserId = $preloadUserId === '' ? null : $preloadUserId;
 		if ($preloadUserId !== null) {
 			return $this->getRoomByActor($token, Attendee::ACTOR_USERS, $preloadUserId);
@@ -686,7 +687,8 @@ class Manager {
 		$helper = new SelectHelper();
 		$helper->selectRoomsTable($query);
 		$query->from('talk_rooms', 'r')
-			->where($query->expr()->eq('r.token', $query->createNamedParameter($token)));
+			->where($query->expr()->eq('r.token', $query->createNamedParameter($token)))
+			->andWhere($query->expr()->eq('r.server_url', $query->createNamedParameter($serverUrl)));
 
 		$result = $query->execute();
 		$row = $result->fetch();
@@ -906,6 +908,23 @@ class Manager {
 		$this->dispatcher->dispatch(Room::EVENT_AFTER_ROOM_CREATE, $event);
 
 		return $room;
+	}
+
+	public function createRemoteRoom(int $type, string $name, string $token, string $serverUrl): Room {
+		$qb = $this->db->getQueryBuilder();
+
+		$qb->insert('talk_rooms')
+			->values([
+				'name' => $qb->createNamedParameter($name),
+				'type' => $qb->createNamedParameter($type, IQueryBuilder::PARAM_INT),
+				'token' => $qb->createNamedParameter($token),
+				'server_url' => $qb->createNamedParameter($serverUrl),
+			]);
+
+		$qb->executeQuery();
+		$roomId = $qb->getLastInsertId();
+
+		return $this->getRoomById($roomId);
 	}
 
 	public function resolveRoomDisplayName(Room $room, string $userId): string {
