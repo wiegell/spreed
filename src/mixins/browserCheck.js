@@ -57,9 +57,6 @@ const browserCheck = {
 		isEdge() {
 			return this.browser.name === 'Edge'
 		},
-		isIE() {
-			return this.browser.name === 'IE' || this.browser.name === 'IEMobile'
-		},
 
 		majorVersion() {
 			return parseInt(this.browser.version.split('.')[0], 10)
@@ -78,7 +75,6 @@ const browserCheck = {
 			|| (this.isChrome && this.majorVersion < 49)
 			|| (this.isOpera && this.majorVersion < 72)
 			|| (this.isSafari && this.majorVersion < 12)
-			|| this.isIE
 		},
 		// Used both in the toast and in the call button tooltip
 		unsupportedWarning() {
