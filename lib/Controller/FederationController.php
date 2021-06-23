@@ -25,28 +25,59 @@ declare(strict_types=1);
 
 namespace OCA\Talk\Controller;
 
+use OC\AppFramework\Middleware\Security\Exceptions\NotLoggedInException;
+use OCA\Talk\AppInfo\Application;
+use OCA\Talk\Exceptions\UnauthorizedException;
+use OCA\Talk\Federation\FederationManager;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\OCSController;
+use OCP\DB\Exception as DBException;
 use OCP\IRequest;
+use OCP\IUser;
+use OCP\IUserSession;
 
 class FederationController extends OCSController {
-	public function __construct(string $appName, IRequest $request) {
-		parent::__construct($appName, $request);
+	/** @var FederationManager */
+	private $federationManager;
+
+	/** @var IUserSession */
+	private $userSession;
+
+	public function __construct(IRequest $request, FederationManager $federationManager, IUserSession $userSession) {
+		parent::__construct(Application::APP_ID, $request);
+		$this->federationManager = $federationManager;
+		$this->userSession = $userSession;
 	}
 
 	/**
-	 * @param string $id
+	 * @param int $id
 	 * @return DataResponse
+	 * @throws NotLoggedInException
+	 * @throws UnauthorizedException
+	 * @throws DBException
 	 */
-	public function acceptShare(string $id): DataResponse {
-
+	public function acceptShare(int $id): DataResponse {
+		$user = $this->userSession->getUser();
+		if (!$user instanceof IUser) {
+			throw new NotLoggedInException();
+		}
+		$this->federationManager->acceptRemoteRoomShare($user, $id);
+		return new DataResponse();
 	}
 
 	/**
-	 * @param string $id
+	 * @param int $id
 	 * @return DataResponse
+	 * @throws NotLoggedInException
+	 * @throws UnauthorizedException
+	 * @throws DBException
 	 */
-	public function rejectShare(string $id): DataResponse {
-
+	public function rejectShare(int $id): DataResponse {
+		$user = $this->userSession->getUser();
+		if (!$user instanceof IUser) {
+			throw new NotLoggedInException();
+		}
+		$this->federationManager->rejectRemoteRoomShare($user, $id);
+		return new DataResponse();
 	}
 }

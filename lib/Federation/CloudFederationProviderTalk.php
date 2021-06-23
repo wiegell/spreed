@@ -35,6 +35,7 @@ use OCP\Federation\Exceptions\ProviderCouldNotAddShareException;
 use OCP\Federation\ICloudFederationProvider;
 use OCP\Federation\ICloudFederationShare;
 use OCP\IURLGenerator;
+use OCP\IUser;
 use OCP\IUserManager;
 use OCP\Notification\IManager as INotificationManager;
 use OCP\Share\IShare;
@@ -107,8 +108,10 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 				throw new ProviderCouldNotAddShareException('User does not exist', '',Http::STATUS_BAD_REQUEST);
 			}
 
-			$shareId = $this->federationManager->addRemoteRoom($shareWith, $roomType, $roomName, $roomToken, $remote, $shareSecret);
-			return (string) $shareId;
+			$shareId = (string) $this->federationManager->addRemoteRoom($shareWith, $roomType, $roomName, $roomToken, $remote, $shareSecret);
+
+			$this->notifyAboutNewShare($shareWith, $shareId, $share->getSharedBy(), $share->getSharedByDisplayName(), $roomName, $roomToken, $remote);
+			return $shareId;
 		}
 		throw new ProviderCouldNotAddShareException('required request data not found', '', Http::STATUS_BAD_REQUEST);
 		// TODO: Finish implementing shareReceived() method.
@@ -122,11 +125,19 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 		// TODO: Implement notificationReceived() method.
 	}
 
-	private function notifyAboutNewShare(string $shareWith, string $shareId, string $ownerFederatedId, string $sharedByFederatedId, string $name) {
+	private function notifyAboutNewShare(IUser $shareWith, string $shareId, string $sharedByFederatedId, string $sharedByName, string $roomName, string $roomToken, string $serverUrl) {
 		$notification = $this->notificationManager->createNotification();
 		$notification->setApp(Application::APP_ID)
-			->setUser($shareWith)
-			->setDateTime(new \DateTime());
+			->setUser($shareWith->getUID())
+			->setDateTime(new \DateTime())
+			->setObject('remote_talk_share', $shareId)
+			->setSubject('remote_talk_share', [
+				'sharedByDisplayName' => $sharedByName,
+				'sharedByFederatedId' => $sharedByFederatedId,
+				'roomName' => $roomName,
+				'serverUrl' => $serverUrl,
+				'roomToken' => $roomToken,
+			]);
 
 		$declineAction = $notification->createAction();
 		$declineAction->setLabel('decline')

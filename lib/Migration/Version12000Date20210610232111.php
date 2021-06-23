@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 /**
- * @copyright Copyright (c) 2021, Gary Kim <gary@garykim.dev>
+ * @copyright Copyright (c) 2021 Gary Kim <gary@garykim.dev>
  *
  * @author Gary Kim <gary@garykim.dev>
  *
@@ -53,13 +53,6 @@ class Version12000Date20210610232111 extends SimpleMigrationStep {
 					'default' => ''
 				]);
 			}
-
-			if ($table->hasColumn('joined')) {
-				$table->addColumn('joined', Types::BOOLEAN, [
-					'notnull' => true,
-					'default' => false,
-				]);
-			}
 		}
 
 		if ($schema->hasTable('talk_rooms')) {
@@ -70,6 +63,27 @@ class Version12000Date20210610232111 extends SimpleMigrationStep {
 					'default' => '',
 				]);
 			}
+		}
+
+		if ($schema->hasTable('talk_invitations')) {
+			$table = $schema->createTable('talk_invitations');
+			$table->addColumn('id', Types::BIGINT, [
+				'autoincrement' => true,
+				'notnull' => true,
+			]);
+			$table->addColumn('room_id', Types::BIGINT, [
+				'notnull' => true,
+				'unsigned' => true,
+			]);
+			$table->addColumn('user_id', Types::STRING, [
+				'notnull' => true,
+				'length' => 255,
+			]);
+			$table->addColumn('access_token', Types::STRING, [
+				'notnull' => true,
+			]);
+
+			$table->setPrimaryKey(['id']);
 		}
 
 		return $schema;

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2020 Joas Schilling <coding@schilljs.com>
+ * @copyright Copyright (c) 2021 Gary Kim <gary@garykim.dev>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -51,8 +52,6 @@ use OCP\AppFramework\Db\Entity;
  * @method int getReadPrivacy()
  * @method void setAccessToken(string $accessToken)
  * @method null|string getAccessToken()
- * @method void setJoined(bool $joined)
- * @method bool getJoined()
  */
 class Attendee extends Entity {
 	public const ACTOR_USERS = 'users';
@@ -101,9 +100,6 @@ class Attendee extends Entity {
 	/** @var string */
 	protected $accessToken;
 
-	/** @var int */
-	protected $joined;
-
 	public function __construct() {
 		$this->addType('roomId', 'int');
 		$this->addType('actorType', 'string');
@@ -118,7 +114,6 @@ class Attendee extends Entity {
 		$this->addType('lastMentionMessage', 'int');
 		$this->addType('readPrivacy', 'int');
 		$this->addType('accessToken', 'string');
-		$this->addType('joined', 'bool');
 	}
 
 	public function getDisplayName(): string {
@@ -144,7 +139,6 @@ class Attendee extends Entity {
 			'last_mention_message' => $this->getLastMentionMessage(),
 			'read_privacy' => $this->getReadPrivacy(),
 			'access_token' => $this->getAccessToken(),
-			'joined' => $this->getJoined(),
 		];
 	}
 }

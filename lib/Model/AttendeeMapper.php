@@ -3,6 +3,7 @@
 declare(strict_types=1);
 /**
  * @copyright Copyright (c) 2020 Joas Schilling <coding@schilljs.com>
+ * @copyright Copyright (c) 2021 Gary Kim <gary@garykim.dev>
  *
  * @license GNU AGPL version 3 or any later version
  *
@@ -153,7 +154,6 @@ class AttendeeMapper extends QBMapper {
 			'last_mention_message' => (int) $row['last_mention_message'],
 			'read_privacy' => (int) $row['read_privacy'],
 			'access_token' => (string) $row['access_token'],
-			'joined' => (bool) $row['joined'],
 		]);
 	}
 }
