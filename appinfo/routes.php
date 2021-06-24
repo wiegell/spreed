@@ -506,20 +506,20 @@ return [
 		],
 
 		/**
-		 * Remote
+		 * Federation
 		 */
 
 		[
-			'name' => 'Remote#acceptShare',
-			'url' => 'api/{apiVersion}/remote/pending/{id}',
+			'name' => 'Federation#acceptShare',
+			'url' => 'api/{apiVersion}/federation/pending/{id}',
 			'verb' => 'POST',
 			'requirements' => [
 				'apiVersion' => 'v1',
 			],
 		],
 		[
-			'name' => 'Remote#rejectShare',
-			'url' => 'api/{apiVersion}/remote/pending/{id}',
+			'name' => 'Federation#rejectShare',
+			'url' => 'api/{apiVersion}/federation/pending/{id}',
 			'verb' => 'DELETE',
 			'requirements' => [
 				'apiVersion' => 'v1',

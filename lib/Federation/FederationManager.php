@@ -32,8 +32,10 @@ use OCA\Talk\Model\Attendee;
 use OCA\Talk\Model\AttendeeMapper;
 use OCA\Talk\Model\Invitation;
 use OCA\Talk\Model\InvitationMapper;
+use OCA\Talk\Room;
 use OCA\Talk\Service\ParticipantService;
 use OCA\Talk\Service\RoomService;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\Exception as DBException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IConfig;
@@ -117,6 +119,7 @@ class FederationManager {
 	/**
 	 * @throws DBException
 	 * @throws UnauthorizedException
+	 * @throws MultipleObjectsReturnedException
 	 */
 	public function acceptRemoteRoomShare(IUser $user, int $shareId) {
 		$invitation = $this->invitationMapper->getInvitationById($shareId);
@@ -142,6 +145,7 @@ class FederationManager {
 	/**
 	 * @throws DBException
 	 * @throws UnauthorizedException
+	 * @throws MultipleObjectsReturnedException
 	 */
 	public function rejectRemoteRoomShare(IUser $user, int $shareId) {
 		$invitation = $this->invitationMapper->getInvitationById($shareId);
@@ -149,5 +153,12 @@ class FederationManager {
 			throw new UnauthorizedException('invitation is for a different user');
 		}
 		$this->invitationMapper->delete($invitation);
+	}
+
+	/**
+	 * @throws DBException
+	 */
+	public function getNumberOfInvitations(Room $room): int {
+		return $this->invitationMapper->countInvitationsForRoom($room);
 	}
 }

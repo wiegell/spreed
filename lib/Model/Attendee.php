@@ -28,7 +28,7 @@ use OCP\AppFramework\Db\Entity;
 
 /**
  * @method void setRoomId(int $roomId)
- * @method string getRoomId()
+ * @method int getRoomId()
  * @method void setActorType(string $actorType)
  * @method string getActorType()
  * @method void setActorId(string $actorId)
