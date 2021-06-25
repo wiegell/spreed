@@ -53,6 +53,12 @@ class Version12000Date20210610232111 extends SimpleMigrationStep {
 					'default' => ''
 				]);
 			}
+			if ($table->hasColumn('joined')) {
+				$table->addColumn('joined', Types::BOOLEAN, [
+					'notnull' => true,
+					'default' => true,
+				]);
+			}
 		}
 
 		if ($schema->hasTable('talk_rooms')) {

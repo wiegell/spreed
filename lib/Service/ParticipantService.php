@@ -274,10 +274,11 @@ class ParticipantService {
 	/**
 	 * @param Room $room
 	 * @param array $participants
+	 * @return Attendee[]
 	 */
-	public function addUsers(Room $room, array $participants): void {
+	public function addUsers(Room $room, array $participants): array {
 		if (empty($participants)) {
-			return;
+			return [];
 		}
 		$event = new AddParticipantsEvent($room, $participants);
 		$this->dispatcher->dispatch(Room::EVENT_BEFORE_USERS_ADD, $event);
@@ -286,6 +287,8 @@ class ParticipantService {
 		if ($room->getLastMessage() instanceof IComment) {
 			$lastMessage = (int) $room->getLastMessage()->getId();
 		}
+
+		$attendees = [];
 
 		foreach ($participants as $participant) {
 			$readPrivacy = Participant::PRIVACY_PUBLIC;
@@ -306,10 +309,12 @@ class ParticipantService {
 			$attendee->setParticipantType($participant['participantType'] ?? Participant::USER);
 			$attendee->setLastReadMessage($lastMessage);
 			$attendee->setReadPrivacy($readPrivacy);
-			$this->attendeeMapper->insert($attendee);
+			$attendee->setJoined($participant['joined'] ?? true);
+			$attendees[] = $this->attendeeMapper->insert($attendee);
 		}
 
 		$this->dispatcher->dispatch(Room::EVENT_AFTER_USERS_ADD, $event);
+		return $attendees;
 	}
 
 	/**

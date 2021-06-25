@@ -60,16 +60,21 @@ class FederationManager {
 	/** @var InvitationMapper */
 	private InvitationMapper $invitationMapper;
 
+	/** @var AttendeeMapper  */
+	private AttendeeMapper $attendeeMapper;
+
 	public function __construct (
 		IConfig $config,
 		Manager $manager,
 		ParticipantService $participantService,
-		InvitationMapper $invitationMapper
+		InvitationMapper $invitationMapper,
+		AttendeeMapper $attendeeMapper
 	) {
 		$this->config = $config;
 		$this->manager = $manager;
 		$this->participantService = $participantService;
 		$this->invitationMapper = $invitationMapper;
+		$this->attendeeMapper = $attendeeMapper;
 	}
 
 	/**
@@ -89,7 +94,6 @@ class FederationManager {
 	 * @param string $remoteUrl
 	 * @param string $sharedSecret
 	 * @return int share id for this specific remote room share
-	 * @throws DBException
 	 */
 	public function addRemoteRoom(IUser $user, int $roomType, string $roomName, string $roomToken, string $remoteUrl, string $sharedSecret): int {
 		try {
@@ -97,45 +101,48 @@ class FederationManager {
 		} catch (RoomNotFoundException $ex) {
 			$room = $this->manager->createRemoteRoom($roomType, $roomName, $roomToken, $remoteUrl);
 		}
-		$invitation = new Invitation();
-		$invitation->setUserId($user->getUID());
-		$invitation->setRoomId($room->getId());
-		$invitation->setAccessToken($sharedSecret);
-		$invitation = $this->invitationMapper->insert($invitation);
 
-		return $invitation->getId();
-	}
-
-	/**
-	 * @throws DBException
-	 * @throws UnauthorizedException
-	 * @throws MultipleObjectsReturnedException
-	 */
-	public function acceptRemoteRoomShare(IUser $user, int $shareId) {
-		$invitation = $this->invitationMapper->getInvitationById($shareId);
-		if ($invitation->getUserId() !== $user->getUID()) {
-			throw new UnauthorizedException('invitation is for a different user');
-		}
-
-		// Add user to the room
-		$room = $this->manager->getRoomById($invitation->getRoomId());
 		$participant = [
 			[
 				'actorType' => Attendee::ACTOR_USERS,
 				'actorId' => $user->getUID(),
 				'displayName' => $user->getDisplayName(),
-				'accessToken' => $invitation->getAccessToken(),
+				'accessToken' => $sharedSecret,
+				'joined' => false,
 			]
 		];
-		$this->participantService->addUsers($room, $participant);
 
-		$this->invitationMapper->delete($invitation);
+		$attendees = $this->participantService->addUsers($room, $participant);
+
+		return $attendees[0]->getId();
 	}
 
 	/**
 	 * @throws DBException
 	 * @throws UnauthorizedException
 	 * @throws MultipleObjectsReturnedException
+	 * @throws DoesNotExistException
+	 */
+	public function acceptRemoteRoomShare(IUser $user, int $shareId) {
+		$attendee = $this->attendeeMapper->getById($shareId);
+		if ($attendee->getActorType() !== Attendee::ACTOR_USERS || $attendee->getActorId() !== $user->getUID()) {
+			throw new UnauthorizedException('invitation is for a different user');
+		}
+
+		$room = $this->manager->getRoomById($attendee->getRoomId());
+		if (!$room->getServerUrl()) {
+			throw new UnauthorizedException('room is not a remote room');
+		}
+
+		$attendee->setJoined(true);
+		$this->attendeeMapper->update($attendee);
+	}
+
+	/**
+	 * @throws DBException
+	 * @throws UnauthorizedException
+	 * @throws MultipleObjectsReturnedException
+	 * @throws DoesNotExistException
 	 */
 	public function rejectRemoteRoomShare(IUser $user, int $shareId) {
 		$invitation = $this->invitationMapper->getInvitationById($shareId);
