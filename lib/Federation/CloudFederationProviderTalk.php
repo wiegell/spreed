@@ -31,6 +31,7 @@ use OC\HintException;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\Talk\AppInfo\Application;
 use OCA\Talk\Manager;
+use OCA\Talk\Model\Attendee;
 use OCA\Talk\Model\AttendeeMapper;
 use OCA\Talk\Participant;
 use OCA\Talk\Service\ParticipantService;
@@ -180,18 +181,7 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 	 * @throws AuthenticationFailedException
 	 */
 	private function shareAccepted(int $id, array $notification): array {
-		if (!$this->federationManager->isEnabled()) {
-			throw new ActionNotSupportedException('Server does not support Talk federation');
-		}
-
-		try {
-			$attendee = $this->attendeeMapper->getById($id);
-		} catch (Exception $ex) {
-			throw new ShareNotFound();
-		}
-		if (!isset($notification['sharedSecret']) || $attendee->getAccessToken() !== $notification['sharedSecret']) {
-			throw new AuthenticationFailedException();
-		}
+		$attendee = $this->getAttendeeAndValidate($id, $notification['sharedSecret']);
 
 		// TODO: Add activity for share accepted
 
@@ -204,6 +194,20 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 	 * @throws AuthenticationFailedException
 	 */
 	private function shareDeclined(int $id, array $notification): array {
+		$attendee = $this->getAttendeeAndValidate($id, $notification['sharedSecret']);
+
+		$room = $this->manager->getRoomById($attendee->getRoomId());
+		$participant = new Participant($room, $attendee, null);
+		$this->participantService->removeAttendee($room, $participant, 'Left Room');
+		return [];
+	}
+
+	/**
+	 * @throws AuthenticationFailedException
+	 * @throws ActionNotSupportedException
+	 * @throws ShareNotFound
+	 */
+	private function getAttendeeAndValidate(int $id, string $sharedSecret): Attendee {
 		if (!$this->federationManager->isEnabled()) {
 			throw new ActionNotSupportedException('Server does not support Talk federation');
 		}
@@ -213,14 +217,13 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 		} catch (Exception $ex) {
 			throw new ShareNotFound();
 		}
-		if (!isset($notification['sharedSecret']) || $attendee->getAccessToken() !== $notification['sharedSecret']) {
+		if ($attendee->getActorType() !== Attendee::ACTOR_FEDERATED_REMOTE_USER) {
+			throw new ShareNotFound();
+		}
+		if ($attendee->getAccessToken() !== $sharedSecret) {
 			throw new AuthenticationFailedException();
 		}
-
-		$room = $this->manager->getRoomById($attendee->getRoomId());
-		$participant = new Participant($room, $attendee, null);
-		$this->participantService->removeAttendee($room, $participant, 'Left Room');
-		return [];
+		return $attendee;
 	}
 
 	private function notifyAboutNewShare(IUser $shareWith, string $shareId, string $sharedByFederatedId, string $sharedByName, string $roomName, string $roomToken, string $serverUrl) {

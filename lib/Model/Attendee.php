@@ -59,7 +59,7 @@ class Attendee extends Entity {
 	public const ACTOR_GUESTS = 'guests';
 	public const ACTOR_EMAILS = 'emails';
 	public const ACTOR_CIRCLES = 'circles';
-	public const ACTOR_FEDERATED_REMOTE = 'federated_remote';
+	public const ACTOR_FEDERATED_REMOTE_USER = 'federated_remote';
 
 	/** @var int */
 	protected $roomId;
