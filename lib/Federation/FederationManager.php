@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 /**
- * @copyright Copyright (c) 2021, Gary Kim <gary@garykim.dev>
+ * @copyright Copyright (c) 2021 Gary Kim <gary@garykim.dev>
  *
  * @author Gary Kim <gary@garykim.dev>
  *
@@ -29,56 +29,37 @@ use OCA\Talk\Exceptions\RoomNotFoundException;
 use OCA\Talk\Exceptions\UnauthorizedException;
 use OCA\Talk\Manager;
 use OCA\Talk\Model\Attendee;
-use OCA\Talk\Model\AttendeeMapper;
 use OCA\Talk\Model\Invitation;
 use OCA\Talk\Model\InvitationMapper;
 use OCA\Talk\Room;
 use OCA\Talk\Service\ParticipantService;
-use OCA\Talk\Service\RoomService;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\Exception as DBException;
-use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IConfig;
-use OCP\IDBConnection;
 use OCP\IUser;
 
 class FederationManager {
-	/** @var IDBConnection */
-	private $db;
-
 	/** @var IConfig */
-	private $config;
+	private IConfig $config;
 
 	/** @var Manager */
-	private $manager;
+	private Manager $manager;
 
 	/** @var ParticipantService */
-	private $participantService;
-
-	/** @var AttendeeMapper */
-	private $attendeeMapper;
-
-	/** @var RoomService */
-	private $roomService;
+	private ParticipantService $participantService;
 
 	/** @var InvitationMapper */
-	private $invitationMapper;
+	private InvitationMapper $invitationMapper;
 
 	public function __construct (
-		IDBConnection $db,
 		IConfig $config,
 		Manager $manager,
 		ParticipantService $participantService,
-		AttendeeMapper $attendeeMapper,
-		RoomService $roomService,
 		InvitationMapper $invitationMapper
 	) {
-		$this->db = $db;
 		$this->config = $config;
 		$this->manager = $manager;
 		$this->participantService = $participantService;
-		$this->attendeeMapper = $attendeeMapper;
-		$this->roomService = $roomService;
 		$this->invitationMapper = $invitationMapper;
 	}
 
@@ -104,7 +85,7 @@ class FederationManager {
 	public function addRemoteRoom(IUser $user, int $roomType, string $roomName, string $roomToken, string $remoteUrl, string $sharedSecret): int {
 		try {
 			$room = $this->manager->getRoomByToken($roomToken, null, $remoteUrl);
-		} catch (RoomNotFoundException $e) {
+		} catch (RoomNotFoundException) {
 			$room = $this->manager->createRemoteRoom($roomType, $roomName, $roomToken, $remoteUrl);
 		}
 		$invitation = new Invitation();

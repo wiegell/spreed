@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 /**
- * @copyright Copyright (c) 2021, Gary Kim <gary@garykim.dev>
+ * @copyright Copyright (c) 2021 Gary Kim <gary@garykim.dev>
  *
  * @author Gary Kim <gary@garykim.dev>
  *
@@ -25,19 +25,18 @@ declare(strict_types=1);
 
 namespace OCA\Talk\Federation;
 
+use Exception;
 use OC\AppFramework\Http;
 use OC\HintException;
 use OCA\FederatedFileSharing\AddressHandler;
 use OCA\Talk\AppInfo\Application;
-use OCA\Talk\Federation\FederationManager;
 use OCA\Talk\Manager;
 use OCA\Talk\Model\AttendeeMapper;
 use OCA\Talk\Participant;
 use OCA\Talk\Service\ParticipantService;
-use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\DB\Exception as DBException;
 use OCP\Federation\Exceptions\ActionNotSupportedException;
+use OCP\Federation\Exceptions\AuthenticationFailedException;
 use OCP\Federation\Exceptions\BadRequestException;
 use OCP\Federation\Exceptions\ProviderCouldNotAddShareException;
 use OCP\Federation\ICloudFederationProvider;
@@ -46,7 +45,7 @@ use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\Notification\IManager as INotificationManager;
-use OCP\Share\IShare;
+use OCP\Share\Exceptions\ShareNotFound;
 
 class CloudFederationProviderTalk implements ICloudFederationProvider {
 
@@ -114,6 +113,10 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 			throw new ProviderCouldNotAddShareException('support for sharing with non-groups not implemented yet', '', Http::STATUS_NOT_IMPLEMENTED);
 		}
 
+		if (!is_numeric($share->getShareType())) {
+			throw new ProviderCouldNotAddShareException('RoomType is not a number', '', Http::STATUS_BAD_REQUEST);
+		}
+
 		$shareSecret = $share->getShareSecret();
 		$shareWith = $share->getShareWith();
 		$roomToken = $share->getProviderId();
@@ -121,11 +124,9 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 		$roomType = (int) $share->getShareType();
 		[, $remote] = $this->addressHandler->splitUserRemote($share->getOwner());
 
-		if ($roomType === 0) {
-			throw new ProviderCouldNotAddShareException('RoomType is not a number', '', Http::STATUS_BAD_REQUEST);
-		}
 
-		if ($remote && $shareSecret && $shareWith) {
+
+		if ($remote && $shareSecret && $shareWith && $roomToken && $roomName) {
 			$shareWith = $this->userManager->get($shareWith);
 			if ($shareWith === null) {
 				throw new ProviderCouldNotAddShareException('User does not exist', '',Http::STATUS_BAD_REQUEST);
@@ -137,37 +138,41 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 			return $shareId;
 		}
 		throw new ProviderCouldNotAddShareException('required request data not found', '', Http::STATUS_BAD_REQUEST);
-		// TODO: Finish implementing shareReceived() method.
 	}
 
 	/**
 	 * @inheritDoc
 	 */
 	public function notificationReceived($notificationType, $providerId, array $notification): array {
+		if (!is_numeric($providerId)) {
+			throw new BadRequestException(['providerId']);
+		}
 		switch ($notificationType) {
 			case 'SHARE_ACCEPTED':
-				return $this->shareAccepted($providerId, $notification);
+				return $this->shareAccepted((int) $providerId, $notification);
 			case 'SHARE_DECLINED':
-				return $this->shareDeclined($providerId, $notification);
+				return $this->shareDeclined((int) $providerId, $notification);
 		}
 		// TODO: Implement notificationReceived() method.
 	}
 
 	/**
-	 * @throws MultipleObjectsReturnedException
-	 * @throws BadRequestException
 	 * @throws ActionNotSupportedException
-	 * @throws DoesNotExistException
-	 * @throws DBException
+	 * @throws ShareNotFound
+	 * @throws AuthenticationFailedException
 	 */
 	private function shareAccepted(int $id, array $notification): array {
 		if (!$this->federationManager->isEnabled()) {
 			throw new ActionNotSupportedException('Server does not support Talk federation');
 		}
 
-		$attendee = $this->attendeeMapper->getById($id);
+		try {
+			$attendee = $this->attendeeMapper->getById($id);
+		} catch (Exception $e) {
+			throw new ShareNotFound();
+		}
 		if (!isset($notification['sharedSecret']) || $attendee->getAccessToken() !== $notification['sharedSecret']) {
-			throw new BadRequestException(['sharedSecret']);
+			throw new AuthenticationFailedException();
 		}
 
 		// TODO: Add activity for share accepted
@@ -176,20 +181,22 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 	}
 
 	/**
-	 * @throws DoesNotExistException
-	 * @throws MultipleObjectsReturnedException
-	 * @throws DBException
-	 * @throws BadRequestException
 	 * @throws ActionNotSupportedException
+	 * @throws ShareNotFound
+	 * @throws AuthenticationFailedException
 	 */
 	private function shareDeclined(int $id, array $notification): array {
 		if (!$this->federationManager->isEnabled()) {
 			throw new ActionNotSupportedException('Server does not support Talk federation');
 		}
 
-		$attendee = $this->attendeeMapper->getById($id);
+		try {
+			$attendee = $this->attendeeMapper->getById($id);
+		} catch (Exception) {
+			throw new ShareNotFound();
+		}
 		if (!isset($notification['sharedSecret']) || $attendee->getAccessToken() !== $notification['sharedSecret']) {
-			throw new BadRequestException(['sharedSecret']);
+			throw new AuthenticationFailedException();
 		}
 
 		$room = $this->manager->getRoomById($attendee->getRoomId());
