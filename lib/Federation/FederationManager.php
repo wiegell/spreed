@@ -92,7 +92,7 @@ class FederationManager {
 	public function addRemoteRoom(IUser $user, int $roomType, string $roomName, string $roomToken, string $remoteUrl, string $sharedSecret): int {
 		try {
 			$room = $this->manager->getRoomByToken($roomToken, null, $remoteUrl);
-		} catch (RoomNotFoundException) {
+		} catch (RoomNotFoundException $ex) {
 			$room = $this->manager->createRemoteRoom($roomType, $roomName, $roomToken, $remoteUrl);
 		}
 		$invitation = new Invitation();

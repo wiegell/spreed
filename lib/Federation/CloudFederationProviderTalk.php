@@ -110,7 +110,8 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 			throw new ProviderCouldNotAddShareException('Server does not support talk federation', '', Http::STATUS_SERVICE_UNAVAILABLE);
 		}
 		if ($share->getShareType() !== 'user') {
-			throw new ProviderCouldNotAddShareException('support for sharing with non-groups not implemented yet', '', Http::STATUS_NOT_IMPLEMENTED);
+			throw new ProviderCouldNotAddShareException('support for sharing with non-users not implemented yet', '', Http::STATUS_NOT_IMPLEMENTED);
+			// TODO: Implement group shares
 		}
 
 		if (!is_numeric($share->getShareType())) {
@@ -185,7 +186,7 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 
 		try {
 			$attendee = $this->attendeeMapper->getById($id);
-		} catch (Exception) {
+		} catch (Exception $ex) {
 			throw new ShareNotFound();
 		}
 		if (!isset($notification['sharedSecret']) || $attendee->getAccessToken() !== $notification['sharedSecret']) {
@@ -209,7 +210,7 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 
 		try {
 			$attendee = $this->attendeeMapper->getById($id);
-		} catch (Exception) {
+		} catch (Exception $ex) {
 			throw new ShareNotFound();
 		}
 		if (!isset($notification['sharedSecret']) || $attendee->getAccessToken() !== $notification['sharedSecret']) {
