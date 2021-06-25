@@ -122,11 +122,20 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 		$roomToken = $share->getProviderId();
 		$roomName = $share->getResourceName();
 		$roomType = (int) $share->getShareType();
-		[, $remote] = $this->addressHandler->splitUserRemote($share->getOwner());
+		$sharedBy = $share->getSharedByDisplayName();
+		$sharedByFederatedId = $share->getSharedBy();
+		$owner = $share->getOwnerDisplayName();
+		$ownerFederatedId = $share->getOwner();
+		[, $remote] = $this->addressHandler->splitUserRemote($ownerFederatedId);
 
+		// if no explicit information about the person who created the share was send
+		// we assume that the share comes from the owner
+		if ($sharedByFederatedId === null) {
+			$sharedBy = $owner;
+			$sharedByFederatedId = $ownerFederatedId;
+		}
 
-
-		if ($remote && $shareSecret && $shareWith && $roomToken && $roomName) {
+		if ($remote && $shareSecret && $shareWith && $roomToken && $roomName && $owner) {
 			$shareWith = $this->userManager->get($shareWith);
 			if ($shareWith === null) {
 				throw new ProviderCouldNotAddShareException('User does not exist', '',Http::STATUS_BAD_REQUEST);
@@ -134,7 +143,7 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 
 			$shareId = (string) $this->federationManager->addRemoteRoom($shareWith, $roomType, $roomName, $roomToken, $remote, $shareSecret);
 
-			$this->notifyAboutNewShare($shareWith, $shareId, $share->getSharedBy(), $share->getSharedByDisplayName(), $roomName, $roomToken, $remote);
+			$this->notifyAboutNewShare($shareWith, $shareId, $sharedByFederatedId, $sharedBy, $roomName, $roomToken, $remote);
 			return $shareId;
 		}
 		throw new ProviderCouldNotAddShareException('required request data not found', '', Http::STATUS_BAD_REQUEST);
@@ -152,6 +161,14 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 				return $this->shareAccepted((int) $providerId, $notification);
 			case 'SHARE_DECLINED':
 				return $this->shareDeclined((int) $providerId, $notification);
+			case 'SHARE_UNSHARED':
+				return []; // TODO: Implement
+			case 'REQUEST_RESHARE':
+				return []; // TODO: Implement
+			case 'RESHARE_UNDO':
+				return []; // TODO: Implement
+			case 'RESHARE_CHANGE_PERMISSION':
+				return []; // TODO: Implement
 		}
 		// TODO: Implement notificationReceived() method.
 	}
@@ -168,7 +185,7 @@ class CloudFederationProviderTalk implements ICloudFederationProvider {
 
 		try {
 			$attendee = $this->attendeeMapper->getById($id);
-		} catch (Exception $e) {
+		} catch (Exception) {
 			throw new ShareNotFound();
 		}
 		if (!isset($notification['sharedSecret']) || $attendee->getAccessToken() !== $notification['sharedSecret']) {

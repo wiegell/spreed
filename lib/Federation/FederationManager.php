@@ -38,6 +38,13 @@ use OCP\DB\Exception as DBException;
 use OCP\IConfig;
 use OCP\IUser;
 
+/**
+ * Class FederationManager
+ *
+ * @package OCA\Talk\Federation
+ *
+ * FederationManager handles incoming federated rooms
+ */
 class FederationManager {
 	/** @var IConfig */
 	private IConfig $config;

@@ -921,7 +921,7 @@ class Manager {
 				'server_url' => $qb->createNamedParameter($serverUrl),
 			]);
 
-		$qb->executeQuery();
+		$qb->executeStatement();
 		$roomId = $qb->getLastInsertId();
 
 		return $this->getRoomById($roomId);
