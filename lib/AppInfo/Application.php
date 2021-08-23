@@ -44,6 +44,7 @@ use OCA\Talk\Events\AttendeesRemovedEvent;
 use OCA\Talk\Events\ChatEvent;
 use OCA\Talk\Events\RoomEvent;
 use OCA\Talk\Deck\DeckPluginLoader;
+use OCA\Talk\Maps\MapsPluginLoader;
 use OCA\Talk\Files\Listener as FilesListener;
 use OCA\Talk\Files\TemplateLoader as FilesTemplateLoader;
 use OCA\Talk\Flow\RegisterOperationsListener;
@@ -117,6 +118,7 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(\OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent::class, UnifiedSearchCSSLoader::class);
 		$context->registerEventListener(UserChangedEvent::class, UserDisplayNameListener::class);
 		$context->registerEventListener(\OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent::class, DeckPluginLoader::class);
+		$context->registerEventListener(\OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent::class, MapsPluginLoader::class);
 		$context->registerEventListener(RegisterOperationsEvent::class, RegisterOperationsListener::class);
 		$context->registerEventListener(AttendeesAddedEvent::class, SystemMessageListener::class);
 		$context->registerEventListener(AttendeesRemovedEvent::class, SystemMessageListener::class);
