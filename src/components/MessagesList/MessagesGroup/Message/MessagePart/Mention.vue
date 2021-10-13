@@ -21,10 +21,13 @@
 
 <template>
 	<div class="mention">
-		<UserBubble v-if="isMentionToAll || isGroupMention"
+		<UserBubble v-if="isMentionToAll"
 			:display-name="name"
 			:avatar-image="'icon-group-forced-white'"
 			:primary="true" />
+		<UserBubble v-else-if="isGroupMention"
+			:display-name="name"
+			:avatar-image="'icon-group-forced-white'" />
 		<UserBubble v-else-if="isMentionToGuest"
 			:display-name="name"
 			:avatar-image="'icon-user-forced-white'"
