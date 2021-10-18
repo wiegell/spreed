@@ -238,8 +238,7 @@ class ChatManager {
 				$this->unreadCountCache->clear($chat->getId() . '-');
 			}
 
-			$alreadyNotifiedUsers = [];
-			$usersDirectlyMentioned = $this->notifier->getMentionedUserIds($comment);
+			$usersDirectlyMentioned = $alreadyNotifiedUsers = [];
 			if ($replyTo instanceof IComment) {
 				$alreadyNotifiedUsers = $this->notifier->notifyReplyToAuthor($chat, $comment, $replyTo);
 				if ($replyTo->getActorType() === Attendee::ACTOR_USERS) {

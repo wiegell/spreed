@@ -95,15 +95,9 @@ class Notifier {
 	 * @return string[] Users that were mentioned
 	 */
 	public function notifyMentionedUsers(Room $chat, IComment $comment, array $alreadyNotifiedUsers): array {
-		$mentionedUserIds = $this->getMentionedUserIds($comment);
+		$mentionedUserIds = $this->getMentionedUserIds($comment, $chat);
 		if (empty($mentionedUserIds)) {
 			return $alreadyNotifiedUsers;
-		}
-
-		$mentionedAll = array_search('all', $mentionedUserIds, true);
-
-		if ($mentionedAll !== false) {
-			$mentionedUserIds = array_unique(array_merge($mentionedUserIds, $this->participantService->getParticipantUserIds($chat)));
 		}
 
 		$notification = $this->createNotification($chat, $comment, 'mention');
@@ -256,14 +250,14 @@ class Notifier {
 	 * @param IComment $comment
 	 * @return string[] the mentioned user IDs
 	 */
-	public function getMentionedUserIds(IComment $comment): array {
+	public function getMentionedUserIds(IComment $comment, Room $chat): array {
 		$mentions = $comment->getMentions();
 
 		if (empty($mentions)) {
 			return [];
 		}
 
-		$userIds = [];
+		$userIds = $this->getAllMentioned($mentions, $chat);
 		foreach ($mentions as $mention) {
 			if ($mention['type'] === 'user') {
 				$userIds[] = $mention['id'];
@@ -271,6 +265,16 @@ class Notifier {
 		}
 
 		return $userIds;
+	}
+
+	private function getAllMentioned(array $mentions, Room $chat): array {
+		foreach ($mentions as $mention) {
+			if ($mention['id'] === 'all' || $mention['type'] === 'group') {
+				return $this->participantService->getParticipantUserIds($chat);
+			}
+		}
+
+		return [];
 	}
 
 	/**
