@@ -28,8 +28,7 @@ $requirements = [
 ];
 
 return [
-	'ocs' => [
-		['name' => 'Federation#acceptShare', 'url' => 'api/{apiVersion}/federation/invitation/{id}', 'verb' => 'POST', 'requirements' => $requirements],
-		['name' => 'Federation#rejectShare', 'url' => 'api/{apiVersion}/federation/invitation/{id}', 'verb' => 'DELETE', 'requirements' => $requirements],
+	'ocs-resources' => [
+		'federation' => ['url' => 'api/{apiVersion}/federation/invitation', 'requirements' => $requirements],
 	],
 ];

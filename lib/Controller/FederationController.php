@@ -58,7 +58,7 @@ class FederationController extends OCSController {
 	 * @throws DBException
 	 * @throws MultipleObjectsReturnedException
 	 */
-	public function acceptShare(int $id): DataResponse {
+	public function create(int $id): DataResponse {
 		$user = $this->userSession->getUser();
 		if (!$user instanceof IUser) {
 			throw new UnauthorizedException();
@@ -76,12 +76,26 @@ class FederationController extends OCSController {
 	 * @throws DBException
 	 * @throws MultipleObjectsReturnedException
 	 */
-	public function rejectShare(int $id): DataResponse {
+	public function destroy(int $id): DataResponse {
 		$user = $this->userSession->getUser();
 		if (!$user instanceof IUser) {
 			throw new UnauthorizedException();
 		}
 		$this->federationManager->rejectRemoteRoomShare($user, $id);
 		return new DataResponse();
+	}
+
+	/**
+	 * @NoAdminRequired
+	 *
+	 * @return DataResponse
+	 */
+	public function index(): DataResponse {
+		$user = $this->userSession->getUser();
+		if (!$user instanceof IUser) {
+			throw new UnauthorizedException();
+		}
+		$invitations = $this->federationManager->getRemoteRoomShares($user);
+		return new DataResponse($invitations);
 	}
 }
