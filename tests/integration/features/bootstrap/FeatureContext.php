@@ -75,6 +75,9 @@ class FeatureContext implements Context, SnippetAcceptingContext {
 	protected $baseUrl;
 
 	/** @var string */
+	protected $baseRemoteUrl;
+
+	/** @var string */
 	protected $lastEtag;
 
 	/** @var array */
@@ -122,6 +125,7 @@ class FeatureContext implements Context, SnippetAcceptingContext {
 	public function __construct() {
 		$this->cookieJars = [];
 		$this->baseUrl = getenv('TEST_SERVER_URL');
+		$this->baseRemoteUrl = getenv('TEST_REMOTE_URL');
 		$this->guestsAppWasEnabled = null;
 	}
 
@@ -515,7 +519,7 @@ class FeatureContext implements Context, SnippetAcceptingContext {
 				}
 
 				if (isset($attendee['actorId'], $attendee['actorType']) && $attendee['actorType'] === 'federated_users') {
-					$attendee['actorId'] .= '@' . rtrim($this->baseUrl, '/');
+					$attendee['actorId'] .= '@' . rtrim($this->baseRemoteUrl, '/');
 				}
 
 				if (isset($attendee['participantType'])) {
@@ -1174,7 +1178,7 @@ class FeatureContext implements Context, SnippetAcceptingContext {
 		$this->setCurrentUser($user);
 
 		if ($newType === 'remote') {
-			$newId .= '@' . $this->baseUrl;
+			$newId .= '@' . $this->baseRemoteUrl;
 		}
 
 		$this->sendRequest(
