@@ -58,7 +58,7 @@ class FederationController extends OCSController {
 	 * @throws DBException
 	 * @throws MultipleObjectsReturnedException
 	 */
-	public function create(int $id): DataResponse {
+	public function acceptShare(int $id): DataResponse {
 		$user = $this->userSession->getUser();
 		if (!$user instanceof IUser) {
 			throw new UnauthorizedException();
@@ -76,7 +76,7 @@ class FederationController extends OCSController {
 	 * @throws DBException
 	 * @throws MultipleObjectsReturnedException
 	 */
-	public function destroy(int $id): DataResponse {
+	public function rejectShare(int $id): DataResponse {
 		$user = $this->userSession->getUser();
 		if (!$user instanceof IUser) {
 			throw new UnauthorizedException();
@@ -90,7 +90,7 @@ class FederationController extends OCSController {
 	 *
 	 * @return DataResponse
 	 */
-	public function index(): DataResponse {
+	public function getShares(): DataResponse {
 		$user = $this->userSession->getUser();
 		if (!$user instanceof IUser) {
 			throw new UnauthorizedException();
