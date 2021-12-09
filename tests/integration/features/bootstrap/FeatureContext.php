@@ -360,63 +360,30 @@ class FeatureContext implements Context, SnippetAcceptingContext {
 	 */
 	private function assertInvites($invites, TableNode $formData) {
 		Assert::assertCount(count($formData->getHash()), $invites, 'Invite count does not match');
-		Assert::assertEquals($formData->getHash(), array_map(function ($room, $expectedRoom) {
-			if (!isset(self::$identifierToToken[$room['name']])) {
-				self::$identifierToToken[$room['name']] = $room['token'];
-			}
-			if (!isset(self::$tokenToIdentifier[$room['token']])) {
-				self::$tokenToIdentifier[$room['token']] = $room['name'];
-			}
+		Assert::assertEquals($formData->getHash(), array_map(function ($invite, $expectedInvite) {
 
 			$data = [];
-			if (isset($expectedRoom['id'])) {
-				$data['id'] = self::$tokenToIdentifier[$room['token']];
+			if (isset($expectedInvite['id'])) {
+				$data['id'] = self::$tokenToIdentifier[$invite['token']];
 			}
-			if (isset($expectedRoom['name'])) {
-				$data['name'] = $room['name'];
+			if (isset($expectedInvite['access_token'])) {
+				$data['access_token'] = (string) $invite['access_token'];
 			}
-			if (isset($expectedRoom['description'])) {
-				$data['description'] = $room['description'];
+			if (isset($expectedInvite['remote_token'])) {
+				$data['remote_token'] = self::$tokenToIdentifier[$invite['remote_token']] ?? 'unknown-token';
 			}
-			if (isset($expectedRoom['type'])) {
-				$data['type'] = (string) $room['type'];
-			}
-			if (isset($expectedRoom['hasPassword'])) {
-				$data['hasPassword'] = (string) $room['hasPassword'];
-			}
-			if (isset($expectedRoom['readOnly'])) {
-				$data['readOnly'] = (string) $room['readOnly'];
-			}
-			if (isset($expectedRoom['listable'])) {
-				$data['listable'] = (string) $room['listable'];
-			}
-			if (isset($expectedRoom['participantType'])) {
-				$data['participantType'] = (string) $room['participantType'];
-			}
-			if (isset($expectedRoom['sipEnabled'])) {
-				$data['sipEnabled'] = (string) $room['sipEnabled'];
-			}
-			if (isset($expectedRoom['callFlag'])) {
-				$data['callFlag'] = (int) $room['callFlag'];
-			}
-			if (isset($expectedRoom['attendeePin'])) {
-				$data['attendeePin'] = $room['attendeePin'] ? '**PIN**' : '';
-			}
-			if (isset($expectedRoom['lastMessage'])) {
-				$data['lastMessage'] = $room['lastMessage'] ? $room['lastMessage']['message'] : '';
-			}
-			if (isset($expectedRoom['unreadMention'])) {
-				$data['unreadMention'] = (int) $room['unreadMention'];
-			}
-			if (isset($expectedRoom['unreadMentionDirect'])) {
-				$data['unreadMentionDirect'] = (int) $room['unreadMentionDirect'];
-			}
-			if (isset($expectedRoom['participants'])) {
-				throw new \Exception('participants key needs to be checked via participants endpoint');
+			if (isset($expectedInvite['remote_server'])) {
+				if ($invite['remote_server'] === 'localhost:8080') {
+					$data['remote_server'] = 'LOCAL';
+				} elseif ($invite['remote_server'] === 'localhost:8180') {
+					$data['remote_server'] = 'REMOTE';
+				} else {
+					$data['remote_server'] = 'unknown-server';
+				}
 			}
 
 			return $data;
-		}, $rooms, $formData->getHash()));
+		}, $invites, $formData->getHash()));
 	}
 
 	/**
