@@ -276,7 +276,7 @@ class ChatManager {
 	}
 
 	public function deleteMessage(Room $chat, int $messageId, string $actorType, string $actorId, \DateTime $deletionTime): IComment {
-		$comment = $this->getComment($chat, (string) $messageId);
+		$comment = $this->commentsManager->getComment($chat, (string) $messageId);
 		$comment->setMessage(
 			json_encode([
 				'deleted_by_type' => $actorType,
@@ -329,22 +329,6 @@ class ChatManager {
 
 		if ($comment->getObjectType() !== 'chat' || $comment->getObjectId() !== (string) $chat->getId()) {
 			throw new NotFoundException('Parent not found in the right context');
-		}
-
-		return $comment;
-	}
-
-	/**
-	 * @param Room $chat
-	 * @param string $messageId
-	 * @return IComment
-	 * @throws NotFoundException
-	 */
-	public function getComment(Room $chat, string $messageId): IComment {
-		$comment = $this->commentsManager->get($messageId);
-
-		if ($comment->getObjectType() !== 'chat' || $comment->getObjectId() !== (string) $chat->getId()) {
-			throw new NotFoundException('Message not found in the right context');
 		}
 
 		return $comment;

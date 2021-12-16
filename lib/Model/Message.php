@@ -180,6 +180,7 @@ class Message {
 			'messageType' => $this->getMessageType(),
 			'isReplyable' => $this->isReplyable(),
 			'referenceId' => (string) $this->getComment()->getReferenceId(),
+			'reactions' => $this->getComment()->getReactions(),
 		];
 
 		if ($this->getMessageType() === 'comment_deleted') {

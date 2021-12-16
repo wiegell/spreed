@@ -25,10 +25,28 @@ namespace OCA\Talk\Chat;
 
 use OC\Comments\Comment;
 use OC\Comments\Manager;
+use OCA\Talk\Room;
 use OCP\Comments\IComment;
+use OCP\Comments\NotFoundException;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 
 class CommentsManager extends Manager {
+	/**
+	 * @param Room $chat
+	 * @param string $messageId
+	 * @return IComment
+	 * @throws NotFoundException
+	 */
+	public function getComment(Room $chat, string $messageId): IComment {
+		$comment = $this->get($messageId);
+
+		if ($comment->getObjectType() !== 'chat' || $comment->getObjectId() !== (string) $chat->getId()) {
+			throw new NotFoundException('Message not found in the right context');
+		}
+
+		return $comment;
+	}
+
 	/**
 	 * @param array $data
 	 * @return IComment
