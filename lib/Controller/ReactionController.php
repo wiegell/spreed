@@ -29,7 +29,6 @@ use OCA\Talk\Chat\CommentsManager;
 use OCA\Talk\Chat\ReactionManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\DataResponse;
-use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Comments\NotFoundException;
 use OCP\IRequest;
 
@@ -120,5 +119,28 @@ class ReactionController extends AEnvironmentAwareController {
 		}
 
 		return new DataResponse([], Http::STATUS_CREATED);
+	}
+
+	/**
+	 * @NoAdminRequired
+	 * @RequireParticipant
+	 * @RequireReadWriteConversation
+	 * @RequireModeratorOrNoLobby
+	 *
+	 * @param int $messageId for reaction
+	 * @param string $emoji the reaction emoji
+	 * @return DataResponse
+	 */
+	public function getReactions(int $messageId, string $emoji): DataResponse {
+		try {
+			// Verify if messageId is of room
+			$this->commentsManager->getComment($this->getRoom(), (string) $messageId);
+		} catch (NotFoundException $e) {
+			return new DataResponse([], Http::STATUS_NOT_FOUND);
+		}
+
+		$reactions = $this->reactionManager->retrieveReactionMessages($this->getRoom(), $this->getParticipant(), $messageId, $emoji);
+
+		return new DataResponse($reactions, Http::STATUS_OK);
 	}
 }
