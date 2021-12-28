@@ -386,6 +386,9 @@ Peer.prototype.offer = function(options) {
 		}
 	}
 	this.pc.createOffer(options).then(function(offer) {
+
+		const sdp = offer.sdp
+
 		if (sendVideo && this.enableSimulcast) {
 			// This SDP munging only works with Chrome (Safari STP may support it too)
 			if (adapter.browserDetails.browser === 'chrome' || adapter.browserDetails.browser === 'safari') {
@@ -401,9 +404,23 @@ Peer.prototype.offer = function(options) {
 				// The offer is a RTCSessionDescription that only serializes
 				// its own attributes to JSON, so if extra attributes are needed
 				// a regular object has to be sent instead.
+				console.debug('WIEGELL pre-edit offer', sdp)
+
+				const arr = sdp.split('\r\n')
+				arr.forEach((str, i) => {
+					if (/^a=fmtp:\d*/.test(str)) {
+						arr[i] = str + ';x-google-max-bitrate=20000;x-google-min-bitrate=0;x-google-start-bitrate=6000'
+					} else if (/^a=mid:(1|video)/.test(str)) {
+						arr[i] += '\r\nb=AS:20000'
+					}
+				})
+				const postEditSdp = arr.join('\r\n')
+				// eslint-disable-next-line no-console
+				console.debug('WIEGELL post-edit offer', sdp)
+
 				offer = {
 					type: offer.type,
-					sdp: offer.sdp,
+					sdp: postEditSdp,
 					nick: this.parent.config.nick,
 				}
 			}
@@ -426,14 +443,30 @@ Peer.prototype.handleOffer = function(offer) {
 
 Peer.prototype.answer = function() {
 	this.pc.createAnswer().then(function(answer) {
+
+		const sdp = answer.sdp
+
+		console.debug('WIEGELL pre-edit answer', sdp)
+
 		this.pc.setLocalDescription(answer).then(function() {
 			if (this.parent.config.nick) {
+				const arr = sdp.split('\r\n')
+				arr.forEach((str, i) => {
+					if (/^a=fmtp:\d*/.test(str)) {
+						arr[i] = str + ';x-google-max-bitrate=20000;x-google-min-bitrate=0;x-google-start-bitrate=6000'
+					} else if (/^a=mid:(1|video)/.test(str)) {
+						arr[i] += '\r\nb=AS:20000'
+					}
+				})
+				const postEditSdp = arr.join('\r\n')
+				// eslint-disable-next-line no-console
+				console.debug('WIEGELL post-edit answer', sdp)
 				// The answer is a RTCSessionDescription that only serializes
 				// its own attributes to JSON, so if extra attributes are needed
 				// a regular object has to be sent instead.
 				answer = {
 					type: answer.type,
-					sdp: answer.sdp,
+					sdp: postEditSdp,
 					nick: this.parent.config.nick,
 				}
 			}
